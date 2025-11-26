@@ -1,0 +1,77 @@
+header {
+    display: flex;
+    height: 100px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 5%;
+}
+
+.menu {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.a:hover{
+    cursor: pointer;
+
+}
+.main_page {
+    content: url(../../public/Platform.png);
+    height: 40px;
+    width: auto;
+    transition: transform 0.3s ease-in-out, filter 1s ease-out;
+    cursor: pointer;
+
+}
+
+.main_page:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(1px 1px 35px #263140);
+}
+header b {
+    font-size: 16px;
+    font-weight: 400;
+    transition: 0.3s ease-in-out;
+    color: #263140;
+    text-decoration: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+header b:hover {
+    color: #2487ff;
+    transform: scale(1.05);
+    filter: drop-shadow(0px 0px 20px #4824ff);
+}
+
+.header-buttons {
+    display: flex;
+    gap: 15px;
+    margin-left: auto;
+}
+
+.lk {
+    height: 50px;
+    width: 200px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid #cdcdcd;
+    overflow: hidden;
+    cursor: pointer;
+    outline: none;
+    font-size: 16px;
+    font-weight: 500;
+    transition: 0.3s ease-in-out;
+}
+
+.lk:hover {
+    border: 1px solid #1a79ff;
+    background: #1a79ff;
+    color: #ffffff;
+    transform: scale(1.05);
+    filter: drop-shadow(1px 1px 15px #1a79ff);
+}

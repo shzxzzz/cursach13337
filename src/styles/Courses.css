@@ -1,0 +1,121 @@
+.courses-section {
+    padding: 80px 20px;
+    background-color: #fff;
+}
+
+.courses-container {
+    max-width: 1500px;
+    margin: 0 auto;
+}
+
+.courses-title {
+    font-size: 26px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 60px;
+    color: #263140;
+}
+
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 30px;
+    justify-content: center;
+}
+
+.course-card {
+    background-color: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: left;
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.course-name {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #263140;
+    text-align: left;
+}
+
+.course-description {
+    color: #627084;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    text-align: left;
+    font-size: 14px;
+}
+
+.course-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    align-items: center;
+    text-align: left;
+}
+
+.course-detail {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.course-detail-icon {
+    color: #627084;
+}
+
+.course-detail-text {
+    color: #263140;
+    font-weight: 500;
+}
+
+.course-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-details {
+    flex: 1;
+    padding: 12px 20px;
+    background-color: transparent;
+    border: 1px solid #1a79ff;
+    color: #1a79ff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-family: Montserrat;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.btn-details:hover {
+    background-color: #1a79ff;
+    color: #fff;
+}
+
+.btn-enroll {
+    flex: 1;
+    padding: 12px 20px;
+    background-color: #1a79ff;
+    border: 1px solid #1a79ff;
+    color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: Montserrat;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.btn-enroll:hover {
+    background-color: #1565d8;
+    border-color: #1565d8;
+}
