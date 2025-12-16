@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Icon } from '../components/Icons.jsx';
-import cabinetApi  from '../api/cabinetApi.js';
+import cabinetApi  from '../api/cabinetApi';
 
 const CabinetPage = () => {
     // ссостояния для данных
