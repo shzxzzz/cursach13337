@@ -3,7 +3,7 @@ import { Lesson, Module } from '../../models/index.js';
 
 const router = express.Router();
 
-// CREATE
+     
 router.post('/', async (req, res, next) => {
     try {
         const payload = req.body;
@@ -55,7 +55,7 @@ router.post('/batch', async (req, res, next) => {
             });
         }
 
-        // Убираем дубликаты и пустые значения
+             
         const uniqueIds = [...new Set(ids.filter(id => id && typeof id === 'number'))];
 
         if (uniqueIds.length === 0) {
@@ -64,7 +64,7 @@ router.post('/batch', async (req, res, next) => {
             });
         }
 
-        // Ищем уроки с указанными ID
+             
         const lessons = await Lesson.findAll({
             where: {
                 id: uniqueIds
@@ -72,7 +72,7 @@ router.post('/batch', async (req, res, next) => {
             order: [['order_index', 'ASC']]
         });
 
-        // Проверяем, все ли уроки найдены
+             
         const foundIds = lessons.map(lesson => lesson.id);
         const missingIds = uniqueIds.filter(id => !foundIds.includes(id));
 
@@ -87,7 +87,7 @@ router.post('/batch', async (req, res, next) => {
     }
 });
 
-// READ ALL
+     
 router.get('/', async (req, res, next) => {
     try {
         const lessons = await Lesson.findAll();
@@ -97,7 +97,7 @@ router.get('/', async (req, res, next) => {
     }
 });
 
-// READ ONE
+     
 router.get('/:id', async (req, res, next) => {
     try {
         const lesson = await Lesson.findByPk(req.params.id);
@@ -108,7 +108,7 @@ router.get('/:id', async (req, res, next) => {
     }
 });
 
-// UPDATE
+     
 router.put('/:id', async (req, res, next) => {
     try {
         const lesson = await Lesson.findByPk(req.params.id);
@@ -128,7 +128,7 @@ router.put('/:id', async (req, res, next) => {
     }
 });
 
-// DELETE
+     
 router.delete('/:id', async (req, res, next) => {
     try {
         const lesson = await Lesson.findByPk(req.params.id);

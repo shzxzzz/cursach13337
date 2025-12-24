@@ -1,7 +1,5 @@
-// src/hooks/useCabinet.js
 import { useState, useEffect, useCallback } from 'react';
-// Импортируем правильно - это default export, поэтому без фигурных скобок
-import cabinetApi from '../cabinetAPI.js'; // <-- с маленькой 'p'
+import cabinetApi from '../cabinetAPI.js';
 
 export function useCabinet() {
     const [dashboardData, setDashboardData] = useState(null);
@@ -9,7 +7,6 @@ export function useCabinet() {
     const [error, setError] = useState(null);
     const [user, setUser] = useState(null);
 
-    // Получить данные пользователя из localStorage
     const getUserData = useCallback(() => {
         try {
             const userData = localStorage.getItem('user');
@@ -22,17 +19,15 @@ export function useCabinet() {
         return null;
     }, []);
 
-    // Загрузить все данные кабинета
     const loadDashboard = useCallback(async () => {
         setLoading(true);
         setError(null);
 
-        // Сначала получаем данные пользователя
         const userData = getUserData();
         setUser(userData);
 
         try {
-            const data = await cabinetApi.getDashboard(); // <-- здесь тоже 'cabinetApi'
+            const data = await cabinetApi.getDashboard();
             setDashboardData(data);
         } catch (err) {
             console.error('Error loading dashboard:', err);
@@ -42,10 +37,9 @@ export function useCabinet() {
         }
     }, [getUserData]);
 
-    // Загрузить только статистику
     const loadStats = useCallback(async () => {
         try {
-            const data = await cabinetApi.getStats(); // <-- здесь тоже
+            const data = await cabinetApi.getStats();
             return data;
         } catch (err) {
             console.error('Error loading stats:', err);
@@ -53,10 +47,9 @@ export function useCabinet() {
         }
     }, []);
 
-    // Загрузить только курсы
     const loadCourses = useCallback(async () => {
         try {
-            const data = await cabinetApi.getMyCourses(); // <-- здесь тоже
+            const data = await cabinetApi.getMyCourses();
             return data;
         } catch (err) {
             console.error('Error loading courses:', err);
@@ -64,10 +57,9 @@ export function useCabinet() {
         }
     }, []);
 
-    // Загрузить только уроки
     const loadLessons = useCallback(async () => {
         try {
-            const data = await cabinetApi.getUpcomingLessons(); // <-- здесь тоже
+            const data = await cabinetApi.getUpcomingLessons();
             return data;
         } catch (err) {
             console.error('Error loading lessons:', err);
@@ -75,7 +67,6 @@ export function useCabinet() {
         }
     }, []);
 
-    // Загрузить домашние задания
     const loadHomeworks = useCallback(async () => {
         try {
             const data = await cabinetApi.getHomeworks(); // <-- здесь тоже
@@ -86,7 +77,6 @@ export function useCabinet() {
         }
     }, []);
 
-    // Обновить данные
     const refresh = useCallback(() => {
         loadDashboard();
     }, [loadDashboard]);
@@ -96,11 +86,9 @@ export function useCabinet() {
     }, [loadDashboard]);
 
     return {
-        // Данные
         dashboardData,
         user,
 
-        // Статусы
         loading,
         error,
 

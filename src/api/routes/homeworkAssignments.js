@@ -3,7 +3,7 @@ import { HomeworkAssignment, Lesson } from '../../models/index.js';
 
 const router = express.Router();
 
-// CREATE
+     
 router.post('/', async (req, res, next) => {
     try {
         const payload = req.body;
@@ -59,7 +59,7 @@ router.post('/', async (req, res, next) => {
     }
 });
 
-// READ ALL
+     
 router.get('/', async (req, res, next) => {
     try {
         const assignments = await HomeworkAssignment.findAll();
@@ -69,7 +69,7 @@ router.get('/', async (req, res, next) => {
     }
 });
 
-// READ ONe
+     
 router.get('/:id', async (req, res, next) => {
     try {
         const assignment = await HomeworkAssignment.findByPk(req.params.id);
@@ -80,7 +80,7 @@ router.get('/:id', async (req, res, next) => {
     }
 });
 
-// UPDATE
+     
 router.put('/:id', async (req, res, next) => {
     try {
         const assignment = await HomeworkAssignment.findByPk(req.params.id);
@@ -92,7 +92,7 @@ router.put('/:id', async (req, res, next) => {
     }
 });
 
-// DELETE
+     
 router.delete('/:id', async (req, res, next) => {
     try {
         const assignment = await HomeworkAssignment.findByPk(req.params.id);

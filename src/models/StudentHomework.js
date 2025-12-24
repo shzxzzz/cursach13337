@@ -13,6 +13,28 @@ class StudentHomework extends Model {
         return await this.findAll();
     }
 
+    static async getHomeworksByStatus(status) {
+        return await this.findAll({
+            where: { status },
+            include: [
+                {
+                    model: this.sequelize.models.User,
+                    as: 'student',
+                    attributes: ['id', 'first_name', 'last_name', 'email']
+                },
+                {
+                    model: this.sequelize.models.HomeworkAssignment,
+                    as: 'assignment',
+                    include: [{
+                        model: this.sequelize.models.Lesson,
+                        as: 'lesson',
+                        attributes: ['id', 'title', 'module_id']
+                    }]
+                }
+            ]
+        });
+    }
+
     static async updateHomework(id, data) {
         const hw = await this.findByPk(id);
         if (!hw) return null;

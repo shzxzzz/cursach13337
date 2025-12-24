@@ -40,7 +40,7 @@ router.post('/', async (req, res, next) => {
     }
 });
 
-// READ ALL
+     
 router.get('/', async (req, res, next) => {
     try {
         const files = await LessonFile.findAll();
@@ -50,7 +50,7 @@ router.get('/', async (req, res, next) => {
     }
 });
 
-// READ ONE
+     
 router.get('/:id', async (req, res, next) => {
     try {
         const file = await LessonFile.findByPk(req.params.id);
@@ -61,7 +61,7 @@ router.get('/:id', async (req, res, next) => {
     }
 });
 
-// UPDATE
+     
 router.put('/:id', async (req, res, next) => {
     try {
         const file = await LessonFile.findByPk(req.params.id);
@@ -73,7 +73,7 @@ router.put('/:id', async (req, res, next) => {
     }
 });
 
-// DELETE
+     
 router.delete('/:id', async (req, res, next) => {
     try {
         const file = await LessonFile.findByPk(req.params.id);

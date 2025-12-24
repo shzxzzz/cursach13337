@@ -1,4 +1,4 @@
-// components/Auth.jsx
+     
 import { useState, useEffect } from 'react';
 import { Icon } from './Icons.jsx';
 
@@ -13,9 +13,9 @@ const Auth = ({ isOpen, onClose, onLoginSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Добавляем CSS анимации при монтировании компонента
+         
     useEffect(() => {
-        // Проверяем, есть ли уже стили
+             
         if (!document.getElementById('auth-modal-styles')) {
             const style = document.createElement('style');
             style.id = 'auth-modal-styles';
@@ -39,7 +39,7 @@ const Auth = ({ isOpen, onClose, onLoginSuccess }) => {
         }
 
         return () => {
-            // Очищаем стили если компонент больше не используется
+                 
             const style = document.getElementById('auth-modal-styles');
             if (style && document.querySelectorAll('[id^="auth-modal-styles"]').length <= 1) {
                 style.remove();
@@ -69,7 +69,7 @@ const Auth = ({ isOpen, onClose, onLoginSuccess }) => {
             if (isLogin) {
                 payload = { email: formData.email, password: formData.password };
             } else {
-                // Преобразуем camelCase в snake_case для бэкенда
+                     
                 payload = {
                     email: formData.email,
                     password: formData.password,
@@ -78,7 +78,7 @@ const Auth = ({ isOpen, onClose, onLoginSuccess }) => {
                 };
             }
 
-            console.log('Sending payload:', payload); // Для отладки
+            console.log('Sending payload:', payload);      
 
             const response = await fetch(`http://localhost:3000${endpoint}`, {
                 method: 'POST',
@@ -94,7 +94,7 @@ const Auth = ({ isOpen, onClose, onLoginSuccess }) => {
                 throw new Error(data.error || 'Ошибка авторизации');
             }
 
-            // Сохраняем токен и данные пользователя
+                 
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
 
@@ -144,7 +144,7 @@ const Auth = ({ isOpen, onClose, onLoginSuccess }) => {
                 position: 'relative',
                 animation: 'slideIn 0.3s ease-out'
             }}>
-                {/* Кнопка закрытия */}
+                {     }
                 <button
                     onClick={onClose}
                     style={{
@@ -164,7 +164,7 @@ const Auth = ({ isOpen, onClose, onLoginSuccess }) => {
                     ×
                 </button>
 
-                {/* Иконка */}
+                {     }
                 <div style={{
                     textAlign: 'center',
                     marginBottom: '30px'
@@ -197,7 +197,7 @@ const Auth = ({ isOpen, onClose, onLoginSuccess }) => {
                     </p>
                 </div>
 
-                {/* Форма */}
+                {     }
                 <form onSubmit={handleSubmit} style={{ width: '100%' }}>
                     {!isLogin && (
                         <>
@@ -419,7 +419,7 @@ const Auth = ({ isOpen, onClose, onLoginSuccess }) => {
                     </div>
                 </form>
 
-                {/* Ссылка на переключение */}
+                {     }
                 <div style={{
                     textAlign: 'center',
                     marginTop: '25px',

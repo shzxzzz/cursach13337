@@ -6,10 +6,10 @@ export function useCourse(courseId) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Функция для загрузки уроков по ID
+         
     const loadLessonsForModules = useCallback(async (modules) => {
         try {
-            // Собираем все ID уроков из всех модулей
+                 
             const allLessonIds = [];
             const moduleLessonMap = {};
 
@@ -28,13 +28,13 @@ export function useCourse(courseId) {
             });
 
             if (allLessonIds.length === 0) {
-                return modules; // Нет уроков для загрузки
+                return modules;      
             }
 
-            // Загружаем все уроки
+                 
             const lessonsData = await lessonsAPI.getByIds(allLessonIds);
 
-            // Создаем маппинг ID урока -> данные
+                 
             const lessonsMap = {};
             lessonsData.forEach(lesson => {
                 if (lesson && lesson.id) {
@@ -42,7 +42,7 @@ export function useCourse(courseId) {
                 }
             });
 
-            // Обновляем модули с загруженными уроками
+                 
             return modules.map(module => {
                 const updatedLessons = (module.lessons || []).map(lesson => {
                     if (lesson.id && lessonsMap[lesson.id]) {
@@ -65,7 +65,7 @@ export function useCourse(courseId) {
             });
         } catch (err) {
             console.error('Error loading lessons:', err);
-            return modules; // Возвращаем модули без обновленных уроков
+            return modules;      
         }
     }, []);
 
@@ -82,15 +82,15 @@ export function useCourse(courseId) {
         try {
             const data = await coursesAPI.getById(courseId);
 
-            console.log('Course data from API:', data); // Для отладки
+            console.log('Course data from API:', data);      
 
-            // Получаем модули
+                 
             let modules = data.modules || [];
 
-            // Загружаем уроки для модулей
+                 
             modules = await loadLessonsForModules(modules);
 
-            // Форматируем данные для компонента
+                 
             const formattedCourse = {
                 id: data.id,
                 title: data.title || 'Без названия',
@@ -101,7 +101,7 @@ export function useCourse(courseId) {
                 teacher: data.teacher
                     ? `${data.teacher.first_name || ''} ${data.teacher.last_name || ''}`.trim()
                     : 'Информация отсутствует',
-                // Внутри fetchCourse, после получения данных
+                     
                 teacherInfo: {
                     position: data.teacher?.position || 'Преподаватель',
                     experience: data.teacher?.experience_years
@@ -150,7 +150,7 @@ export function useCourse(courseId) {
     };
 }
 
-// Вспомогательная функция для обработки benefits
+     
 function getBenefits(benefitsData) {
     if (Array.isArray(benefitsData)) {
         return benefitsData;

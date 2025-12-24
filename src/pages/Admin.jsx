@@ -18,6 +18,8 @@ const AdminPage = () => {
     const [homeworkAssignments, setHomeworkAssignments] = useState([]);
     const [modules, setModules] = useState([]);
     const [lessons, setLessons] = useState([]);
+    const [studentHomeworks, setStudentHomeworks] = useState([]);
+    const [studentLessonProgress, setStudentLessonProgress] = useState([]);
 
     const [courseSearch, setCourseSearch] = useState('');
     const [userSearch, setUserSearch] = useState('');
@@ -46,6 +48,10 @@ const AdminPage = () => {
     const filteredHomeworkAssignments = homeworkAssignments.filter(hw =>
         hw.title.toLowerCase().includes(homeworkSearch.toLowerCase()) ||
         hw.description?.toLowerCase().includes(homeworkSearch.toLowerCase())
+    );
+
+    const filteredStudentHomeworks = studentHomeworks.filter(hw =>
+        hw.status === 'submitted_for_review'
     );
 
     const [courseForm, setCourseForm] = useState({
@@ -141,13 +147,22 @@ const AdminPage = () => {
         try {
             setLoading(true);
 
-            const [coursesData, usersData, homeworksData, modulesData, lessonsData, homeworkAssignmentsData] = await Promise.all([
+            const [
+                coursesData,
+                usersData,
+                modulesData,
+                lessonsData,
+                homeworkAssignmentsData,
+                studentHomeworksData,
+                studentLessonProgressData
+            ] = await Promise.all([
                 apiRequest('/courses'),
                 apiRequest('/users'),
-                apiRequest('/student-homeworks?status=submitted_for_review'),
                 apiRequest('/modules'),
                 apiRequest('/lessons'),
-                apiRequest('/homework-assignments')
+                apiRequest('/homework-assignments'),
+                apiRequest('/student-homeworks'),
+                apiRequest('/student-lesson-progress')
             ]);
 
             setCourses(coursesData || []);
@@ -155,12 +170,18 @@ const AdminPage = () => {
             setModules(modulesData || []);
             setLessons(lessonsData || []);
             setHomeworkAssignments(homeworkAssignmentsData || []);
+            setStudentHomeworks(studentHomeworksData || []);
+            setStudentLessonProgress(studentLessonProgressData || []);
+
+            const pendingHomeworksCount = (studentHomeworksData || []).filter(
+                hw => hw.status === 'submitted_for_review'
+            ).length;
 
             setStats({
                 totalCourses: coursesData?.length || 0,
                 totalUsers: usersData?.length || 0,
-                totalHomeworks: homeworksData?.length || 0,
-                pendingHomeworks: homeworksData?.filter(h => h.status === 'submitted_for_review')?.length || 0
+                totalHomeworks: studentHomeworksData?.length || 0,
+                pendingHomeworks: pendingHomeworksCount
             });
 
         } catch (err) {
@@ -171,7 +192,7 @@ const AdminPage = () => {
         }
     }, [apiRequest]);
 
-    // создание курса
+         
     const createCourse = async () => {
         try {
             const course = await apiRequest('/courses', {
@@ -188,13 +209,12 @@ const AdminPage = () => {
         }
     };
 
-    // создание пользователя
+         
     const createUser = async () => {
         try {
-            // Для регистрации нужен пароль
             const userData = {
                 ...userForm,
-                password: 'password123' // Можно сделать поле для пароля
+                password: 'password123'
             };
 
             const user = await apiRequest('/users', {
@@ -211,7 +231,7 @@ const AdminPage = () => {
         }
     };
 
-    // создание модуля
+         
     const createModule = async () => {
         try {
             const module = await apiRequest('/modules', {
@@ -228,7 +248,7 @@ const AdminPage = () => {
         }
     };
 
-    // создание урока
+         
     const createLesson = async () => {
         try {
             const lesson = await apiRequest('/lessons', {
@@ -245,7 +265,7 @@ const AdminPage = () => {
         }
     };
 
-    // создание ДЗ
+         
     const createHomework = async () => {
         try {
             const homework = await apiRequest('/homework-assignments', {
@@ -262,29 +282,84 @@ const AdminPage = () => {
         }
     };
 
-    // оценка дз
+         
     const gradeHomework = async () => {
         try {
-            await apiRequest(`/student-homeworks/${gradingHomework.id}`, {
+            if (!gradingHomework) return;
+
+                 
+            const updatedHomework = await apiRequest(`/student-homeworks/${gradingHomework.id}`, {
                 method: 'PUT',
                 body: {
                     status: 'graded',
                     grade: gradeForm.grade,
                     teacher_comment: gradeForm.teacher_comment,
-                    graded_at: new Date().toISOString()
+                    graded_at: new Date().toISOString(),
+                    graded_by: users.find(u => u.role === 'admin' || u.role === 'teacher')?.id || 1
                 }
             });
+
+                 
+            if (gradeForm.grade >= 4) {
+                try {
+                         
+                    const homeworkAssignment = homeworkAssignments.find(
+                        hw => hw.id === gradingHomework.homework_assignment_id
+                    );
+
+                    if (homeworkAssignment && homeworkAssignment.lesson_id) {
+                             
+                        const existingProgress = studentLessonProgress.find(
+                            progress =>
+                                progress.student_id === gradingHomework.student_id &&
+                                progress.lesson_id === homeworkAssignment.lesson_id
+                        );
+
+                        if (existingProgress) {
+                                 
+                            await apiRequest(`/student-lesson-progress/${existingProgress.id}`, {
+                                method: 'PUT',
+                                body: {
+                                    is_completed: true,
+                                    last_accessed_at: new Date().toISOString()
+                                }
+                            });
+                        } else {
+                                 
+                            await apiRequest('/student-lesson-progress', {
+                                method: 'POST',
+                                body: {
+                                    student_id: gradingHomework.student_id,
+                                    lesson_id: homeworkAssignment.lesson_id,
+                                    is_completed: true,
+                                    last_accessed_at: new Date().toISOString()
+                                }
+                            });
+                        }
+                    }
+                } catch (progressErr) {
+                    console.error('Error updating lesson progress:', progressErr);
+                         
+                }
+            }
+
+                 
+            setStudentHomeworks(prev =>
+                prev.map(hw =>
+                    hw.id === gradingHomework.id ? updatedHomework : hw
+                )
+            );
 
             setGradingHomework(null);
             setGradeForm({ grade: 5, teacher_comment: '' });
             alert('Домашнее задание оценено!');
-            loadAllData();
+            loadAllData();      
         } catch (err) {
             alert(`Ошибка: ${err.message}`);
         }
     };
 
-    // удаление курса с содержимым
+         
     const deleteCourse = async (id) => {
         if (!confirm(deleteCourseWithContent
             ? 'Удалить курс вместе со всеми модулями и уроками?'
@@ -292,30 +367,23 @@ const AdminPage = () => {
 
         try {
             if (deleteCourseWithContent) {
-                // сначала найдем все модули
                 const courseModules = modules.filter(m => m.course_id === id);
 
-                // для каждого модуля удалим уроки и домашки
                 for (const module of courseModules) {
                     const moduleLessons = lessons.filter(l => l.module_id === module.id);
 
-                    // удаляем уроки и их домашук
                     for (const lesson of moduleLessons) {
-                        // удаляем дз
                         const homework = homeworkAssignments.find(h => h.lesson_id === lesson.id);
                         if (homework) {
                             await apiRequest(`/homework-assignments/${homework.id}`, { method: 'DELETE' });
                         }
-                        // удаляем урок
                         await apiRequest(`/lessons/${lesson.id}`, { method: 'DELETE' });
                     }
 
-                    // удаляем модуль
                     await apiRequest(`/modules/${module.id}`, { method: 'DELETE' });
                 }
             }
 
-            // удаляем курс
             await apiRequest(`/courses/${id}`, { method: 'DELETE' });
 
             setCourses(courses.filter(c => c.id !== id));
@@ -326,7 +394,7 @@ const AdminPage = () => {
         }
     };
 
-    // удаление модуля с уроками
+         
     const deleteModule = async (id) => {
         if (!confirm(deleteModuleWithLessons
             ? 'Удалить модуль вместе со всеми уроками?'
@@ -334,22 +402,17 @@ const AdminPage = () => {
 
         try {
             if (deleteModuleWithLessons) {
-                // находим все уроки этого модуля
                 const moduleLessons = lessons.filter(l => l.module_id === id);
 
-                // удаляем уроки и их дз
                 for (const lesson of moduleLessons) {
-                    // удаляем дз урока
                     const homework = homeworkAssignments.find(h => h.lesson_id === lesson.id);
                     if (homework) {
                         await apiRequest(`/homework-assignments/${homework.id}`, { method: 'DELETE' });
                     }
-                    // удаляем урок
                     await apiRequest(`/lessons/${lesson.id}`, { method: 'DELETE' });
                 }
             }
 
-            // удаляем модуль
             await apiRequest(`/modules/${id}`, { method: 'DELETE' });
 
             setModules(modules.filter(m => m.id !== id));
@@ -360,7 +423,7 @@ const AdminPage = () => {
         }
     };
 
-    // удаление урока с дз
+         
     const deleteLesson = async (id) => {
         if (!confirm(deleteLessonWithHomework
             ? 'Удалить урок вместе с домашним заданием?'
@@ -368,14 +431,12 @@ const AdminPage = () => {
 
         try {
             if (deleteLessonWithHomework) {
-                // нахожу дз урока
                 const homework = homeworkAssignments.find(h => h.lesson_id === id);
                 if (homework) {
                     await apiRequest(`/homework-assignments/${homework.id}`, { method: 'DELETE' });
                 }
             }
 
-            // удаляем урок
             await apiRequest(`/lessons/${id}`, { method: 'DELETE' });
 
             setLessons(lessons.filter(l => l.id !== id));
@@ -386,7 +447,7 @@ const AdminPage = () => {
         }
     };
 
-    // удаление домашнего задания
+         
     const deleteHomework = async (id) => {
         if (!confirm('Удалить домашнее задание?')) return;
 
@@ -399,7 +460,7 @@ const AdminPage = () => {
         }
     };
 
-    // удаление пользователя
+         
     const deleteUser = async (id) => {
         if (!confirm('Удалить пользователя?')) return;
 
@@ -412,7 +473,7 @@ const AdminPage = () => {
         }
     };
 
-    // обновление статуса курса
+         
     const toggleCoursePublish = async (course) => {
         try {
             await apiRequest(`/courses/${course.id}`, {
@@ -432,7 +493,7 @@ const AdminPage = () => {
         }
     };
 
-    // сброс форм
+         
     const resetCourseForm = () => {
         setCourseForm({
             title: '',
@@ -490,7 +551,7 @@ const AdminPage = () => {
         setEditingHomework(null);
     };
 
-    // заполнение форм для редактирования
+         
     const editCourse = (course) => {
         setCourseForm({
             title: course.title,
@@ -553,7 +614,7 @@ const AdminPage = () => {
         setActiveTab('homeworks');
     };
 
-    // обновление
+         
     const updateCourse = async () => {
         try {
             await apiRequest(`/courses/${editingCourse}`, {
@@ -627,6 +688,23 @@ const AdminPage = () => {
         } catch (err) {
             alert(`Ошибка: ${err.message}`);
         }
+    };
+
+         
+    const getHomeworkInfo = (homework) => {
+        const assignment = homeworkAssignments.find(a => a.id === homework.homework_assignment_id);
+        const lesson = lessons.find(l => assignment && l.id === assignment.lesson_id);
+        const module = modules.find(m => lesson && m.id === lesson.module_id);
+        const course = courses.find(c => module && c.id === module.course_id);
+        const student = users.find(u => u.id === homework.student_id);
+
+        return {
+            assignment,
+            lesson,
+            module,
+            course,
+            student
+        };
     };
 
     useEffect(() => {
@@ -765,13 +843,13 @@ const AdminPage = () => {
                             {tab === 'modules' && 'Модули'}
                             {tab === 'lessons' && 'Уроки'}
                             {tab === 'homeworks' && 'Домашние задания'}
-                            {tab === 'check-homework' && 'Проверка ДЗ'}
+                            {tab === 'check-homework' && `Проверка ДЗ (${filteredStudentHomeworks.length})`}
                         </button>
                     ))}
                 </div>
 
                 <div>
-                    {/* дэшборд */}
+                    {     }
                     {activeTab === 'dashboard' && (
                         <div>
                             <h2 style={{
@@ -1252,7 +1330,7 @@ const AdminPage = () => {
                                     </div>
                                 </div>
 
-                                {/* список курсов */}
+                                {     }
                                 <div>
                                     <div style={{
                                         display: 'flex',
@@ -1488,7 +1566,7 @@ const AdminPage = () => {
                         </div>
                     )}
 
-                    {/* пользователи */}
+                    {     }
                     {activeTab === 'users' && (
                         <div>
                             <div style={{
@@ -1725,7 +1803,7 @@ const AdminPage = () => {
                                     </div>
                                 </div>
 
-                                {/* список пользователей */}
+                                {     }
                                 <div>
                                     <div style={{
                                         display: 'flex',
@@ -1917,7 +1995,7 @@ const AdminPage = () => {
                         </div>
                     )}
 
-                    {/* модули */}
+                    {     }
                     {activeTab === 'modules' && (
                         <div>
                             <div style={{
@@ -2092,7 +2170,7 @@ const AdminPage = () => {
                                     </div>
                                 </div>
 
-                                {/* список модулей */}
+                                {     }
                                 <div>
                                     <div style={{
                                         display: 'flex',
@@ -2279,7 +2357,7 @@ const AdminPage = () => {
                         </div>
                     )}
 
-                    {/* уроки */}
+                    {     }
                     {activeTab === 'lessons' && (
                         <div>
                             <div style={{
@@ -2506,7 +2584,7 @@ const AdminPage = () => {
                                     </div>
                                 </div>
 
-                                {/* список уроков */}
+                                {     }
                                 <div>
                                     <div style={{
                                         display: 'flex',
@@ -2705,7 +2783,7 @@ const AdminPage = () => {
                         </div>
                     )}
 
-                    {/* дз */}
+                    {     }
                     {activeTab === 'homeworks' && (
                         <div>
                             <div style={{
@@ -2909,7 +2987,7 @@ const AdminPage = () => {
                                     </div>
                                 </div>
 
-                                {/* список дз */}
+                                {     }
                                 <div>
                                     <div style={{
                                         display: 'flex',
@@ -3086,7 +3164,7 @@ const AdminPage = () => {
                         </div>
                     )}
 
-                    {/* проверка домашек */}
+                    {     }
                     {activeTab === 'check-homework' && (
                         <div>
                             <h2 style={{
@@ -3095,7 +3173,7 @@ const AdminPage = () => {
                                 marginBottom: '20px',
                                 color: '#263140'
                             }}>
-                                Проверка домашних заданий ({stats.pendingHomeworks})
+                                Проверка домашних заданий ({filteredStudentHomeworks.length})
                             </h2>
 
                             {gradingHomework ? (
@@ -3116,6 +3194,7 @@ const AdminPage = () => {
                                     </h3>
 
                                     <div style={{ marginBottom: '20px' }}>
+                                        {     }
                                         <div style={{
                                             backgroundColor: '#f8f9fa',
                                             border: '1px solid #e9ecef',
@@ -3126,16 +3205,50 @@ const AdminPage = () => {
                                             <div style={{
                                                 fontSize: '14px',
                                                 color: '#627084',
-                                                marginBottom: '5px'
+                                                marginBottom: '5px',
+                                                fontWeight: '500'
+                                            }}>
+                                                Информация о задании:
+                                            </div>
+                                            {(() => {
+                                                const info = getHomeworkInfo(gradingHomework);
+                                                return (
+                                                    <div style={{ color: '#263140', fontSize: '14px' }}>
+                                                        <div>Студент: {info.student ? `${info.student.first_name} ${info.student.last_name}` : 'Неизвестен'}</div>
+                                                        <div>Курс: {info.course?.title || 'Неизвестен'}</div>
+                                                        <div>Урок: {info.lesson?.title || 'Неизвестен'}</div>
+                                                        <div>Задание: {info.assignment?.title || 'Неизвестно'}</div>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+
+                                        <div style={{
+                                            backgroundColor: '#f8f9fa',
+                                            border: '1px solid #e9ecef',
+                                            borderRadius: '8px',
+                                            padding: '15px',
+                                            marginBottom: '15px'
+                                        }}>
+                                            <div style={{
+                                                fontSize: '14px',
+                                                color: '#627084',
+                                                marginBottom: '5px',
+                                                fontWeight: '500'
                                             }}>
                                                 Ответ студента:
                                             </div>
                                             <div style={{
                                                 color: '#263140',
                                                 lineHeight: '1.5',
-                                                whiteSpace: 'pre-wrap'
+                                                whiteSpace: 'pre-wrap',
+                                                fontFamily: 'monospace',
+                                                backgroundColor: '#fff',
+                                                padding: '10px',
+                                                borderRadius: '4px',
+                                                border: '1px solid #e9ecef'
                                             }}>
-                                                {gradingHomework.text_answer}
+                                                {gradingHomework.text_answer || 'Текстовый ответ отсутствует'}
                                             </div>
                                             {gradingHomework.file_url && (
                                                 <div style={{ marginTop: '10px' }}>
@@ -3149,15 +3262,57 @@ const AdminPage = () => {
                                                             fontSize: '14px',
                                                             display: 'flex',
                                                             alignItems: 'center',
-                                                            gap: '5px'
+                                                            gap: '5px',
+                                                            padding: '8px 12px',
+                                                            backgroundColor: '#fff',
+                                                            border: '1px solid #1a79ff',
+                                                            borderRadius: '6px',
+                                                            width: 'fit-content'
                                                         }}
                                                     >
                                                         <Icon name="download" size={14} />
-                                                        Прикрепленный файл
+                                                        Скачать прикрепленный файл
                                                     </a>
                                                 </div>
                                             )}
                                         </div>
+
+                                        {     }
+                                        {(() => {
+                                            const info = getHomeworkInfo(gradingHomework);
+                                            if (info.assignment?.description) {
+                                                return (
+                                                    <div style={{
+                                                        backgroundColor: '#fff9db',
+                                                        border: '1px solid #F59E0B',
+                                                        borderRadius: '8px',
+                                                        padding: '15px',
+                                                        marginBottom: '15px'
+                                                    }}>
+                                                        <div style={{
+                                                            fontSize: '14px',
+                                                            color: '#F59E0B',
+                                                            marginBottom: '5px',
+                                                            fontWeight: '500',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '5px'
+                                                        }}>
+                                                            <Icon name="info" size={14} />
+                                                            Описание задания:
+                                                        </div>
+                                                        <div style={{
+                                                            color: '#263140',
+                                                            lineHeight: '1.5',
+                                                            fontSize: '14px'
+                                                        }}>
+                                                            {info.assignment.description}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                     </div>
 
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -3191,6 +3346,11 @@ const AdminPage = () => {
                                                         {num}
                                                     </button>
                                                 ))}
+                                            </div>
+                                            <div style={{ marginTop: '10px', fontSize: '13px', color: '#627084' }}>
+                                                {gradeForm.grade >= 4
+                                                    ? 'При оценке 4 или 5 урок будет автоматически помечен как пройденный'
+                                                    : 'При оценке ниже 4 урок останется непройденным'}
                                             </div>
                                         </div>
 
@@ -3237,7 +3397,10 @@ const AdminPage = () => {
                                                 Отправить оценку
                                             </button>
                                             <button
-                                                onClick={() => setGradingHomework(null)}
+                                                onClick={() => {
+                                                    setGradingHomework(null);
+                                                    setGradeForm({ grade: 5, teacher_comment: '' });
+                                                }}
                                                 style={{
                                                     padding: '14px 24px',
                                                     backgroundColor: '#f8f9fa',
@@ -3256,10 +3419,10 @@ const AdminPage = () => {
                             ) : (
                                 <div style={{
                                     display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
                                     gap: '20px'
                                 }}>
-                                    {stats.pendingHomeworks === 0 ? (
+                                    {filteredStudentHomeworks.length === 0 ? (
                                         <div style={{
                                             gridColumn: '1 / -1',
                                             padding: '40px',
@@ -3271,19 +3434,154 @@ const AdminPage = () => {
                                         }}>
                                             <Icon name="assignment" size={48} color="#627084" style={{ marginBottom: '15px' }} />
                                             <h3 style={{ color: '#263140', marginBottom: '10px' }}>Нет заданий на проверку</h3>
-                                            <p>Все домашние задания проверены</p>
+                                            <p>Все домашние задания проверены или студенты еще не отправили работы</p>
                                         </div>
                                     ) : (
-                                        <div style={{
-                                            gridColumn: '1 / -1',
-                                            padding: '40px',
-                                            textAlign: 'center',
-                                            color: '#627084'
-                                        }}>
-                                            <Icon name="assignment" size={48} color="#627084" style={{ marginBottom: '15px' }} />
-                                            <h3 style={{ color: '#263140', marginBottom: '10px' }}>Задания на проверку загружаются</h3>
-                                            <p>Используется endpoint: /student-homeworks?status=submitted_for_review</p>
-                                        </div>
+                                        filteredStudentHomeworks.map(homework => {
+                                            const info = getHomeworkInfo(homework);
+                                            const submittedDate = homework.submitted_at
+                                                ? new Date(homework.submitted_at).toLocaleDateString('ru-RU')
+                                                : 'Не указана';
+
+                                            return (
+                                                <div key={homework.id} style={{
+                                                    backgroundColor: '#fff',
+                                                    border: '1px solid #e9ecef',
+                                                    borderRadius: '12px',
+                                                    padding: '20px',
+                                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                                                    transition: 'all 0.2s ease',
+                                                    cursor: 'pointer',
+                                                    ':hover': {
+                                                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                                                        transform: 'translateY(-2px)'
+                                                    }
+                                                }} onClick={() => {
+                                                    setGradingHomework(homework);
+                                                    setGradeForm({
+                                                        grade: 5,
+                                                        teacher_comment: ''
+                                                    });
+                                                }}>
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'flex-start',
+                                                        marginBottom: '15px'
+                                                    }}>
+                                                        <div>
+                                                            <div style={{
+                                                                fontSize: '16px',
+                                                                fontWeight: '600',
+                                                                color: '#263140',
+                                                                marginBottom: '5px'
+                                                            }}>
+                                                                {info.assignment?.title || 'Задание без названия'}
+                                                            </div>
+                                                            <div style={{
+                                                                fontSize: '14px',
+                                                                color: '#627084'
+                                                            }}>
+                                                                {info.course?.title || 'Без курса'} • {info.lesson?.title || 'Без урока'}
+                                                            </div>
+                                                        </div>
+                                                        <div style={{
+                                                            fontSize: '12px',
+                                                            color: '#F59E0B',
+                                                            backgroundColor: '#F59E0B20',
+                                                            padding: '4px 8px',
+                                                            borderRadius: '4px'
+                                                        }}>
+                                                            На проверке
+                                                        </div>
+                                                    </div>
+
+                                                    <div style={{
+                                                        fontSize: '14px',
+                                                        color: '#263140',
+                                                        marginBottom: '15px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '10px'
+                                                    }}>
+                                                        <div style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '5px'
+                                                        }}>
+                                                            <Icon name="user" size={14} color="#1a79ff" />
+                                                            <span>{info.student ? `${info.student.first_name} ${info.student.last_name}` : 'Неизвестный студент'}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div style={{
+                                                        fontSize: '13px',
+                                                        color: '#627084',
+                                                        marginBottom: '15px',
+                                                        maxHeight: '60px',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        display: '-webkit-box',
+                                                        WebkitLineClamp: 2,
+                                                        WebkitBoxOrient: 'vertical'
+                                                    }}>
+                                                        <strong>Ответ:</strong> {homework.text_answer?.substring(0, 100) || 'Текстовый ответ отсутствует'}...
+                                                    </div>
+
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        fontSize: '12px',
+                                                        color: '#627084',
+                                                        borderTop: '1px solid #f0f0f0',
+                                                        paddingTop: '15px',
+                                                        marginTop: '15px'
+                                                    }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                            <Icon name="calendar" size={12} />
+                                                            <span>Отправлено: {submittedDate}</span>
+                                                        </div>
+                                                        {homework.file_url && (
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                                <Icon name="paperclip" size={12} />
+                                                                <span>Есть файл</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setGradingHomework(homework);
+                                                            setGradeForm({
+                                                                grade: 5,
+                                                                teacher_comment: ''
+                                                            });
+                                                        }}
+                                                        style={{
+                                                            width: '100%',
+                                                            marginTop: '15px',
+                                                            padding: '10px',
+                                                            backgroundColor: '#1a79ff',
+                                                            border: 'none',
+                                                            color: '#fff',
+                                                            borderRadius: '8px',
+                                                            cursor: 'pointer',
+                                                            fontWeight: '600',
+                                                            fontSize: '14px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            gap: '8px'
+                                                        }}
+                                                    >
+                                                        <Icon name="grade" size={16} />
+                                                        Проверить задание
+                                                    </button>
+                                                </div>
+                                            );
+                                        })
                                     )}
                                 </div>
                             )}

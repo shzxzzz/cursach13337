@@ -79,7 +79,7 @@ router.post('/', async (req, res, next) => {
     }
 });
 
-// READ ALL
+     
 router.get('/', async (req, res, next) => {
     try {
         const progresses = await StudentLessonProgress.findAll();
@@ -89,18 +89,24 @@ router.get('/', async (req, res, next) => {
     }
 });
 
-// READ ONE
-router.get('/:id', async (req, res, next) => {
+     
+router.get('/', async (req, res, next) => {
     try {
-        const progress = await StudentLessonProgress.findByPk(req.params.id);
-        if (!progress) return res.status(404).json({ error: 'Progress not found' });
-        res.json(progress);
+        const { student_id } = req.query;
+        let where = {};
+
+        if (student_id) {
+            where.student_id = student_id;
+        }
+
+        const progresses = await StudentLessonProgress.findAll({ where });
+        res.json(progresses);
     } catch (err) {
         next(err);
     }
 });
 
-// UPDATE
+     
 router.put('/:id', async (req, res, next) => {
     try {
         const progress = await StudentLessonProgress.findByPk(req.params.id);
@@ -112,7 +118,7 @@ router.put('/:id', async (req, res, next) => {
     }
 });
 
-// DELETE
+     
 router.delete('/:id', async (req, res, next) => {
     try {
         const progress = await StudentLessonProgress.findByPk(req.params.id);

@@ -36,7 +36,7 @@ export default (sequelize) => {
             full_description: { type: DataTypes.TEXT, allowNull: false },
             teacher_id: { type: DataTypes.INTEGER, allowNull: false },
             price: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
-            duration: { type: DataTypes.INTEGER, allowNull: false }, // длительность в неделях
+            duration: { type: DataTypes.INTEGER, allowNull: false },      
             student_count: { type: DataTypes.INTEGER, defaultValue: 0 },
             is_published: { type: DataTypes.BOOLEAN, defaultValue: false },
             icon: { type: DataTypes.STRING },

@@ -1,4 +1,4 @@
-// routes/cabinet.js
+     
 import express from 'express';
 import {
     User,
@@ -14,11 +14,11 @@ import { authenticateToken } from '../../components/checkAuth.js';
 
 const router = express.Router();
 
-// Все маршруты кабинета требуют аутентификации
+     
 router.use(authenticateToken);
 
-// Вспомогательная функция для получения курсов с прогрессом
-// Вспомогательная функция для получения курсов с прогрессом
+     
+     
 async function getCoursesWithProgress(userId) {
     const enrollments = await Enrollment.findAll({
         where: { student_id: userId },
@@ -41,7 +41,7 @@ async function getCoursesWithProgress(userId) {
         enrollments.map(async (enrollment) => {
             const course = enrollment.course;
 
-            // Получаем все уроки курса
+                 
             const modules = await Module.findAll({
                 where: { course_id: course.id },
                 include: [
@@ -53,14 +53,14 @@ async function getCoursesWithProgress(userId) {
                 ]
             });
 
-            // Собираем все ID уроков
+                 
             const lessonIds = modules.flatMap(module =>
                 module.lessons?.map(lesson => lesson.id) || []
             );
 
             const totalLessons = lessonIds.length;
 
-            // Получаем пройденные уроки
+                 
             let completedLessons = 0;
             if (lessonIds.length > 0) {
                 completedLessons = await StudentLessonProgress.count({
@@ -72,7 +72,7 @@ async function getCoursesWithProgress(userId) {
                 });
             }
 
-            // Рассчитываем прогресс
+                 
             const progress = totalLessons > 0
                 ? Math.round((completedLessons / totalLessons) * 100)
                 : 0;
@@ -95,17 +95,17 @@ async function getCoursesWithProgress(userId) {
     return coursesWithProgress;
 }
 
-// 1. Получить общую статистику пользователя
+     
 router.get('/stats', async (req, res, next) => {
     try {
         const userId = req.user.id;
 
-        // Активные курсы
+             
         const activeCourses = await Enrollment.count({
             where: { student_id: userId }
         });
 
-        // Пройденные уроки
+             
         const completedLessons = await StudentLessonProgress.count({
             where: {
                 student_id: userId,
@@ -113,7 +113,7 @@ router.get('/stats', async (req, res, next) => {
             }
         });
 
-        // Часы обучения - ВРЕМЕННО считаем 1 урок = 1 час
+             
         const hoursStudied = completedLessons;
 
         res.json({
@@ -127,14 +127,14 @@ router.get('/stats', async (req, res, next) => {
     }
 });
 
-// 5. Получить все данные кабинета одним запросом
+     
 router.get('/dashboard', async (req, res, next) => {
     try {
         const userId = req.user.id;
 
-        // Параллельно загружаем все данные
+             
         const [stats, courses, lessons, homeworks] = await Promise.all([
-            // Статистика
+                 
             (async () => {
                 const activeCourses = await Enrollment.count({
                     where: { student_id: userId }
@@ -145,7 +145,7 @@ router.get('/dashboard', async (req, res, next) => {
                         is_completed: true
                     }
                 });
-                // Часы обучения - ВРЕМЕННО
+                     
                 const hoursStudied = completedLessons;
 
                 return {
@@ -156,12 +156,12 @@ router.get('/dashboard', async (req, res, next) => {
                 };
             })(),
 
-            // Курсы (используем общую функцию)
+                 
             (async () => {
                 return await getCoursesWithProgress(userId);
             })(),
 
-            // Следующие уроки
+                 
             (async () => {
                 const enrollments = await Enrollment.findAll({
                     where: { student_id: userId },
@@ -216,7 +216,7 @@ router.get('/dashboard', async (req, res, next) => {
                 return upcomingLessons.slice(0, 3);
             })(),
 
-            // Домашние задания
+                 
             (async () => {
                 const homeworks = await StudentHomework.findAll({
                     where: { student_id: userId },
@@ -278,7 +278,7 @@ router.get('/my-courses', async (req, res, next) => {
     }
 });
 
-// Получить следующие уроки
+     
 router.get('/upcoming-lessons', async (req, res, next) => {
     try {
         const userId = req.user.id;
@@ -338,7 +338,7 @@ router.get('/upcoming-lessons', async (req, res, next) => {
     }
 });
 
-// Получить домашние задания
+     
 router.get('/homeworks', async (req, res, next) => {
     try {
         const userId = req.user.id;
@@ -368,19 +368,19 @@ router.get('/homeworks', async (req, res, next) => {
     }
 });
 
-// Отметить урок как пройденный
+     
 router.post('/complete-lesson', async (req, res, next) => {
     try {
         const userId = req.user.id;
         const { lessonId, timeSpentMinutes = 0 } = req.body;
 
-        // Проверяем, существует ли урок
+             
         const lesson = await Lesson.findByPk(lessonId);
         if (!lesson) {
             return res.status(404).json({ error: 'Урок не найден' });
         }
 
-        // Создаем или обновляем прогресс
+             
         const [progress, created] = await StudentLessonProgress.findOrCreate({
             where: {
                 student_id: userId,

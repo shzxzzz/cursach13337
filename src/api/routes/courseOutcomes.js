@@ -3,7 +3,7 @@ import { CourseOutcome, Course } from '../../models/index.js';
 
 const router = express.Router();
 
-// CREATE
+     
 router.post('/', async (req, res, next) => {
     try {
         const payload = req.body;
@@ -41,7 +41,7 @@ router.post('/', async (req, res, next) => {
     }
 });
 
-// READ all
+     
 router.get('/', async (req, res, next) => {
     try {
         const outcomes = await CourseOutcome.findAll();
@@ -51,7 +51,7 @@ router.get('/', async (req, res, next) => {
     }
 });
 
-// READ one
+     
 router.get('/:id', async (req, res, next) => {
     try {
         const outcome = await CourseOutcome.findByPk(req.params.id);
@@ -62,7 +62,7 @@ router.get('/:id', async (req, res, next) => {
     }
 });
 
-// UPDATE
+     
 router.put('/:id', async (req, res, next) => {
     try {
         const outcome = await CourseOutcome.findByPk(req.params.id);
@@ -74,7 +74,7 @@ router.put('/:id', async (req, res, next) => {
     }
 });
 
-// DELETE
+     
 router.delete('/:id', async (req, res, next) => {
     try {
         const outcome = await CourseOutcome.findByPk(req.params.id);

@@ -1,4 +1,4 @@
-// src/api/hooks/useLesson.js
+     
 import { useState, useEffect, useCallback } from 'react';
 import lessonAPI from '../lessonAPI.js';
 
@@ -15,6 +15,31 @@ export function useLesson(lessonId) {
         progress: null
     });
 
+    const checkHomeworkCompletion = useCallback(async () => {
+        if (!lessonId) return false;
+
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) return false;
+
+                 
+            const homework = await lessonAPI.getHomeworkForLesson(lessonId);
+            if (!homework) return false;      
+
+                 
+            const studentHomeworks = await lessonAPI.getStudentHomeworks(user.id);
+            const studentHomework = studentHomeworks.find(
+                hw => hw.homework_assignment_id === homework.id
+            );
+
+                 
+            return studentHomework && studentHomework.status === 'graded';
+        } catch (err) {
+            console.error('Error checking homework completion:', err);
+            return false;
+        }
+    }, [lessonId]);
+
     const fetchLesson = useCallback(async () => {
         console.log('Fetching lesson with ID:', lessonId);
 
@@ -28,12 +53,12 @@ export function useLesson(lessonId) {
         setError(null);
 
         try {
-            // Получаем полные данные урока
+                 
             const data = await lessonAPI.getFullLessonData(lessonId);
 
             console.log('Full lesson data:', data);
 
-            // Форматируем данные для компонента
+                 
             const formattedLesson = {
                 id: data.lesson.id,
                 title: data.lesson.title || 'Без названия',
@@ -45,7 +70,7 @@ export function useLesson(lessonId) {
 
             setLesson(formattedLesson);
 
-            // Сохраняем курс
+                 
             if (data.course) {
                 const formattedCourse = {
                     id: data.course.id,
@@ -57,7 +82,7 @@ export function useLesson(lessonId) {
                 setCourse(formattedCourse);
             }
 
-            // Форматируем файлы
+                 
             const formattedFiles = (data.files || []).map(file => {
                 const fileName = file.file_name || '';
                 const fileType = file.file_type || '';
@@ -75,7 +100,7 @@ export function useLesson(lessonId) {
                 };
             });
 
-            // Форматируем домашнее задание
+                 
             let formattedHomework = null;
             if (data.homework) {
                 formattedHomework = {
@@ -88,7 +113,7 @@ export function useLesson(lessonId) {
                 };
             }
 
-            // Форматируем соседние уроки
+                 
             const formattedPrevious = data.adjacentLessons?.previous ? {
                 id: data.adjacentLessons.previous.id,
                 title: data.adjacentLessons.previous.title,
@@ -119,7 +144,7 @@ export function useLesson(lessonId) {
         }
     }, [lessonId]);
 
-    // Вспомогательные функции
+         
     const getFileType = (fileType, extension) => {
         const typeMap = {
             'pdf': 'PDF документ',
@@ -204,7 +229,7 @@ export function useLesson(lessonId) {
         return `До ${deadlineDate.toLocaleDateString('ru-RU')}`;
     };
 
-    // Загрузить файл
+         
     const downloadFile = useCallback(async (file) => {
         try {
             if (file.downloadUrl) {
@@ -241,16 +266,16 @@ export function useLesson(lessonId) {
     };
 
     return {
-        // Данные
+             
         lesson,
         course,
         relatedData,
 
-        // Статусы
+             
         loading,
         error,
 
-        // Функции
+             
         refresh,
         downloadFile
     };

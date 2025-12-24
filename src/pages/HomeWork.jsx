@@ -17,7 +17,7 @@ const HomeworkPage = () => {
         refresh
     } = useHomework();
 
-    // загрузка
+         
     if (loading) {
         return (
             <div style={{
@@ -104,7 +104,7 @@ const HomeworkPage = () => {
         <div style={{ padding: '60px 20px', backgroundColor: '#fff', minHeight: '100vh' }}>
             <div style={{ maxWidth: '1300px', margin: '0 auto' }}>
 
-                {/* Хлебные крошки */}
+                {     }
                 <div style={{ marginBottom: '25px' }}>
                     <div style={{
                         display: 'flex',
@@ -139,59 +139,9 @@ const HomeworkPage = () => {
                                 <Icon name="assignment" size={28} color="#1a79ff" />
                                 Домашние задания
                             </h1>
-
-                            {/* обновить */}
-                            <button
-                                onClick={refresh}
-                                disabled={refreshing}
-                                style={{
-                                    padding: '8px 16px',
-                                    backgroundColor: '#f8f9fa',
-                                    border: '1px solid #e9ecef',
-                                    color: '#627084',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer',
-                                    fontSize: '14px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    transition: 'all 0.3s ease',
-                                    opacity: refreshing ? 0.7 : 1
-                                }}
-                                onMouseEnter={(e) => {
-                                    if (!refreshing) {
-                                        e.target.style.backgroundColor = '#1a79ff';
-                                        e.target.style.color = '#fff';
-                                        e.target.style.borderColor = '#1a79ff';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (!refreshing) {
-                                        e.target.style.backgroundColor = '#f8f9fa';
-                                        e.target.style.color = '#627084';
-                                        e.target.style.borderColor = '#e9ecef';
-                                    }
-                                }}
-                            >
-                                <Icon
-                                    name="refresh"
-                                    size={16}
-                                    color={refreshing ? '#1a79ff' : '#627084'}
-                                    style={{
-                                        animation: refreshing ? 'spin 1s linear infinite' : 'none'
-                                    }}
-                                />
-                                {refreshing ? 'Обновление...' : 'Обновить'}
-                                <style>{`
-                                    @keyframes spin {
-                                        0% { transform: rotate(0deg); }
-                                        100% { transform: rotate(360deg); }
-                                    }
-                                `}</style>
-                            </button>
                         </div>
 
-                        {/* список домашек */}
+                        {     }
                         {homeworks.length === 0 ? (
                             <div style={{
                                 backgroundColor: '#f8f9fa',
@@ -211,8 +161,6 @@ const HomeworkPage = () => {
                                         key={homework.id}
                                         homework={homework}
                                         onSubmitAnswer={submitAnswer}
-                                        onChangeGrade={changeGrade}
-                                        onChangeStatus={changeStatus}
                                         navigate={navigate}
                                     />
                                 ))}
@@ -221,7 +169,7 @@ const HomeworkPage = () => {
                     </div>
 
                     <div>
-                        {/* статсы */}
+                        {     }
                         <div style={{
                             backgroundColor: '#fff',
                             border: '1px solid #e9ecef',
@@ -352,7 +300,7 @@ const HomeworkPage = () => {
                             </div>
                         </div>
 
-                        {/* рекомендации для студента */}
+                        {     }
                         <div style={{
                             backgroundColor: '#fff',
                             border: '1px solid #e9ecef',
@@ -496,32 +444,27 @@ const HomeworkPage = () => {
     );
 };
 
-// карточка домашнего задания
-const HomeworkCard = ({ homework, onSubmitAnswer, onChangeGrade, onChangeStatus, navigate }) => {
+     
+const HomeworkCard = ({ homework, onSubmitAnswer, navigate }) => {
     const [answer, setAnswer] = useState(homework.answer || '');
-    const [showTestButtons, setShowTestButtons] = useState(false);
 
     const handleSubmit = async () => {
         if (answer.trim()) {
-            const success = await onSubmitAnswer(homework.id, answer);
-            if (success) {
-                alert('Домашнее задание успешно отправлено!');
-            } else {
-                alert('Ошибка при отправке задания');
-            }
+            await onSubmitAnswer(homework.id, answer);
+                 
         } else {
             alert('Введите ответ перед отправкой');
         }
     };
 
-    // цвет в завимимости от оценки
+         
     const getProgressBarColor = (grade) => {
         const colors = [
-            '#EF4444', // 1
-            '#F59E0B', // 2
-            '#EAB308', // 3
-            '#84CC16', // 4
-            '#22C55E'  // 5
+            '#EF4444',      
+            '#F59E0B',      
+            '#EAB308',      
+            '#84CC16',      
+            '#22C55E'       
         ];
         return colors[grade - 1] || '#EF4444';
     };
@@ -548,7 +491,7 @@ const HomeworkCard = ({ homework, onSubmitAnswer, onChangeGrade, onChangeStatus,
 
     const statusStyles = getStatusStyles();
 
-    // переход к уроку
+         
     const goToLesson = () => {
         if (homework.lessonId) {
             navigate(`/lesson/${homework.lessonId}`);
@@ -573,7 +516,7 @@ const HomeworkCard = ({ homework, onSubmitAnswer, onChangeGrade, onChangeStatus,
                  e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.05)';
              }}>
 
-            {/* название и статус */}
+            {     }
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
                 <div style={{ flex: 1 }}>
                     <h3 style={{
@@ -669,7 +612,7 @@ const HomeworkCard = ({ homework, onSubmitAnswer, onChangeGrade, onChangeStatus,
                 </div>
             </div>
 
-            {/* описание дз */}
+            {     }
             {homework.description && (
                 <div style={{
                     fontSize: '14px',
@@ -685,7 +628,7 @@ const HomeworkCard = ({ homework, onSubmitAnswer, onChangeGrade, onChangeStatus,
                 </div>
             )}
 
-            {/* срок сдачи, оценка, когда отправлено */}
+            {     }
             <div style={{ marginBottom: '15px' }}>
                 {homework.status === 'waiting' && (
                     <div style={{
@@ -714,7 +657,7 @@ const HomeworkCard = ({ homework, onSubmitAnswer, onChangeGrade, onChangeStatus,
                 )}
                 {homework.status === 'checked' && homework.grade > 0 && (
                     <div>
-                        {/* прогресс бар с оценкой */}
+                        {     }
                         <div style={{
                             width: '100%',
                             height: '50px',
@@ -878,7 +821,7 @@ const HomeworkCard = ({ homework, onSubmitAnswer, onChangeGrade, onChangeStatus,
 
             {homework.status === 'checked' && (
                 <div>
-                    {/* комментарий */}
+                    {     }
                     {homework.teacherComment && (
                         <div style={{ marginBottom: '15px' }}>
                             <div style={{
@@ -906,111 +849,7 @@ const HomeworkCard = ({ homework, onSubmitAnswer, onChangeGrade, onChangeStatus,
                             </div>
                         </div>
                     )}
-
-                    {/* демо кнопка оценки */}
-                    <button
-                        onClick={() => onChangeGrade(homework.id)}
-                        style={{
-                            padding: '8px 16px',
-                            backgroundColor: '#6B7280',
-                            border: 'none',
-                            color: '#fff',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontWeight: '500',
-                            fontSize: '12px',
-                            transition: 'all 0.3s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#4B5563';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = '#6B7280';
-                        }}
-                    >
-                        <Icon name="refresh" size={12} color="#fff" />
-                        Тест: изменить оценку
-                    </button>
                 </div>
-            )}
-
-            {/* демо кнопки */}
-            {process.env.NODE_ENV === 'development' && (
-                <>
-                    <button
-                        onClick={() => setShowTestButtons(!showTestButtons)}
-                        style={{
-                            marginTop: '15px',
-                            padding: '4px 8px',
-                            backgroundColor: '#f8f9fa',
-                            border: '1px solid #e9ecef',
-                            color: '#627084',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '10px'
-                        }}
-                    >
-                        {showTestButtons ? 'Скрыть тестовые кнопки' : 'Показать тестовые кнопки'}
-                    </button>
-
-                    {/* кнопка смена статуса */}
-                    {showTestButtons && (
-                        <div style={{
-                            marginTop: '10px',
-                            paddingTop: '10px',
-                            borderTop: '1px dashed #e9ecef',
-                            display: 'flex',
-                            gap: '8px',
-                            justifyContent: 'center'
-                        }}>
-                            <button
-                                onClick={() => onChangeStatus(homework.id, 'waiting')}
-                                style={{
-                                    padding: '4px 8px',
-                                    backgroundColor: '#F59E0B',
-                                    border: 'none',
-                                    color: '#fff',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontSize: '10px'
-                                }}
-                            >
-                                В ожидании
-                            </button>
-                            <button
-                                onClick={() => onChangeStatus(homework.id, 'submitted')}
-                                style={{
-                                    padding: '4px 8px',
-                                    backgroundColor: '#3B82F6',
-                                    border: 'none',
-                                    color: '#fff',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontSize: '10px'
-                                }}
-                            >
-                                На проверке
-                            </button>
-                            <button
-                                onClick={() => onChangeStatus(homework.id, 'checked')}
-                                style={{
-                                    padding: '4px 8px',
-                                    backgroundColor: '#10B981',
-                                    border: 'none',
-                                    color: '#fff',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontSize: '10px'
-                                }}
-                            >
-                                Проверено
-                            </button>
-                        </div>
-                    )}
-                </>
             )}
         </div>
     );

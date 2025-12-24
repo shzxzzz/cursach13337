@@ -13,7 +13,6 @@ import enrollmentsRouter from './routes/enrollments.js';
 import studentLessonProgressRouter from './routes/studentLessonProgress.js';
 import homeworkAssignmentsRouter from './routes/homeworkAssignments.js';
 import studentHomeworksRouter from './routes/studentHomeworks.js';
-
 import authRouter from './routes/auth.js';
 import cabinetRouter from './routes/cabinet.js';
 

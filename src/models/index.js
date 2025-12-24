@@ -1,4 +1,4 @@
-// файл для инициализации всей хуйни
+     
 import sequelize from '../db/index.js';
 
 import defineUser from './User.js';

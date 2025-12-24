@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Icon } from '../components/Icons.jsx';
-import cabinetApi  from '../api/cabinetAPI';
+import cabinetApi from '../api/cabinetAPI.js';
 
 const CabinetPage = () => {
-    // ссостояния для данных
     const [stats, setStats] = useState({
         activeCourses: 0,
         completedLessons: 0,
@@ -16,7 +15,6 @@ const CabinetPage = () => {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
 
-    //
     useEffect(() => {
         loadData();
         const userData = localStorage.getItem('user');
@@ -33,7 +31,6 @@ const CabinetPage = () => {
         try {
             setLoading(true);
             const data = await cabinetApi.getDashboard();
-            // статы из апи тащим
             setStats(data.stats || {
                 activeCourses: 0,
                 completedLessons: 0,
@@ -51,7 +48,181 @@ const CabinetPage = () => {
         }
     };
 
-    // приветствие
+         
+    const getNextLessonForCourse = async (courseId) => {
+        try {
+            const userId = user?.id || JSON.parse(localStorage.getItem('user'))?.id;
+
+            if (!userId) return null;
+
+                 
+            const progressResponse = await fetch(`http://localhost:3000/api/student-lesson-progress?student_id=${userId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const allProgresses = await progressResponse.json();
+
+                 
+            const courseResponse = await fetch(`http://localhost:3000/api/courses/${courseId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const courseData = await courseResponse.json();
+
+                 
+            const completedLessonIds = new Set();
+            allProgresses.forEach(progress => {
+                if (progress.is_completed && progress.student_id === userId) {
+                    completedLessonIds.add(progress.lesson_id);
+                }
+            });
+
+                 
+            if (courseData.modules && courseData.modules.length > 0) {
+                const sortedModules = [...courseData.modules].sort((a, b) => a.order_index - b.order_index);
+
+                for (const module of sortedModules) {
+                    if (module.lessons && module.lessons.length > 0) {
+                        const sortedLessons = [...module.lessons].sort((a, b) => a.order_index - b.order_index);
+
+                        for (const lesson of sortedLessons) {
+                            if (!completedLessonIds.has(lesson.id)) {
+                                return lesson;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return null;
+
+        } catch (error) {
+            console.error('Ошибка поиска следующего урока:', error);
+            return null;
+        }
+    };
+
+         
+    const getFirstLessonOfCourse = async (courseId) => {
+        try {
+            const response = await fetch(`http://localhost:3000/api/courses/${courseId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const course = await response.json();
+
+            if (course.modules && course.modules.length > 0) {
+                const sortedModules = [...course.modules].sort((a, b) => a.order_index - b.order_index);
+
+                for (const module of sortedModules) {
+                    if (module.lessons && module.lessons.length > 0) {
+                        const sortedLessons = [...module.lessons].sort((a, b) => a.order_index - b.order_index);
+                        return sortedLessons[0];
+                    }
+                }
+            }
+
+            return null;
+        } catch (error) {
+            console.error('Ошибка получения первого урока:', error);
+            return null;
+        }
+    };
+
+         
+    const handleContinueCourse = async (course, e) => {
+        e.stopPropagation();
+
+        try {
+                 
+            let nextLesson = await getNextLessonForCourse(course.id);
+
+            if (!nextLesson) {
+                     
+                nextLesson = await getFirstLessonOfCourse(course.id);
+
+                if (!nextLesson) {
+                    alert('В этом курсе пока нет уроков');
+                    return;
+                }
+            }
+
+                 
+            await markLessonAsStarted(nextLesson.id);
+
+                 
+            window.location.href = `/lesson/${nextLesson.id}`;
+
+        } catch (error) {
+            console.error('Ошибка при продолжении курса:', error);
+            alert('Не удалось загрузить следующий урок. Попробуйте снова.');
+        }
+    };
+
+         
+    const markLessonAsStarted = async (lessonId) => {
+        try {
+            const userId = user?.id || JSON.parse(localStorage.getItem('user'))?.id;
+
+                 
+            const checkResponse = await fetch('http://localhost:3000/api/student-lesson-progress', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (checkResponse.ok) {
+                const allProgress = await checkResponse.json();
+                const existingProgress = allProgress.find(
+                    p => p.student_id === userId && p.lesson_id === lessonId
+                );
+
+                if (existingProgress) {
+                         
+                    await fetch(`http://localhost:3000/api/student-lesson-progress/${existingProgress.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            last_accessed_at: new Date().toISOString(),
+                            is_completed: false
+                        })
+                    });
+                } else {
+                         
+                    await fetch('http://localhost:3000/api/student-lesson-progress', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            student_id: userId,
+                            lesson_id: lessonId,
+                            is_completed: false,
+                            last_accessed_at: new Date().toISOString()
+                        })
+                    });
+                }
+            }
+
+        } catch (error) {
+            console.error('Ошибка отметки урока:', error);
+        }
+    };
+
     const getUserGreeting = () => {
         if (user) {
             const firstName = user.first_name || '';
@@ -62,7 +233,6 @@ const CabinetPage = () => {
         return 'Студент';
     };
 
-    // получение иконки курса
     const getCourseIcon = (iconName) => {
         const iconMap = {
             'project': 'project',
@@ -74,7 +244,7 @@ const CabinetPage = () => {
         return iconMap[iconName] || 'book';
     };
 
-    // загрузка
+         
     if (loading) {
         return (
             <div style={{ padding: '20px 20px', backgroundColor: '#f8f9fa', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -104,7 +274,7 @@ const CabinetPage = () => {
         <div style={{ padding: '20px 20px', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
             <div style={{ maxWidth: '1300px', margin: '0 auto' }}>
 
-                {/* Личный кабинет, добро пожаловать студент */}
+                {     }
                 <div style={{
                     backgroundColor: '#fff',
                     border: '1px solid #e9ecef',
@@ -123,7 +293,7 @@ const CabinetPage = () => {
                     </div>
                 </div>
 
-                {/* доиитежния */}
+                {     }
                 <div style={{
                     backgroundColor: '#fff',
                     border: '1px solid #e9ecef',
@@ -142,7 +312,7 @@ const CabinetPage = () => {
                         gap: '10px'
                     }}>
 
-                        {/* курсы */}
+                        {     }
                         <div style={{
                             backgroundColor: '#f8f9fa',
                             border: '1px solid #e9ecef',
@@ -194,7 +364,7 @@ const CabinetPage = () => {
                             </div>
                         </div>
 
-                        {/* пройденные уроки */}
+                        {     }
                         <div style={{
                             backgroundColor: '#f8f9fa',
                             border: '1px solid #e9ecef',
@@ -246,7 +416,7 @@ const CabinetPage = () => {
                             </div>
                         </div>
 
-                        {/* часы обучения */}
+                        {     }
                         <div style={{
                             backgroundColor: '#f8f9fa',
                             border: '1px solid #e9ecef',
@@ -298,7 +468,7 @@ const CabinetPage = () => {
                             </div>
                         </div>
 
-                        {/* завершенные курсы */}
+                        {     }
                         <div style={{
                             backgroundColor: '#f8f9fa',
                             border: '1px solid #e9ecef',
@@ -354,7 +524,7 @@ const CabinetPage = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '15px', alignItems: 'start' }}>
 
-                    {/* мои курсы */}
+                    {     }
                     <div style={{
                         backgroundColor: '#fff',
                         border: '1px solid #e9ecef',
@@ -397,10 +567,10 @@ const CabinetPage = () => {
                                          e.currentTarget.style.transform = 'translateX(0)';
                                          e.currentTarget.style.boxShadow = 'none';
                                      }}
-                                     onClick={() => window.location.href = `/courses/${course.id}`}>
+                                     onClick={() => window.location.href = `/course/${course.id}`}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                                         <div>
-                                            {/* Иконка и название в одной строке */}
+                                            {     }
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
                                                 <Icon name={getCourseIcon(course.icon)} size={24} color="#1a79ff" />
                                                 <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#263140', margin: 0 }}>
@@ -411,32 +581,34 @@ const CabinetPage = () => {
                                                 {course.completedLessons} из {course.totalLessons} уроков пройдено
                                             </p>
                                         </div>
-                                        <button style={{
-                                            padding: '8px 12px',
-                                            backgroundColor: '#fff',
-                                            border: '1px solid #263140',
-                                            color: '#263140',
-                                            borderRadius: '6px',
-                                            cursor: 'pointer',
-                                            fontWeight: '500',
-                                            fontSize: '14px',
-                                            transition: 'all 0.3s ease',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px'
-                                        }}
-                                                onMouseEnter={(e) => {
-                                                    e.target.style.backgroundColor = '#1a79ff';
-                                                    e.target.style.color = '#fff';
-                                                    e.target.style.transform = 'scale(1.05)';
-                                                    e.target.style.border = '1px solid #1a79ff';
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.target.style.backgroundColor = '#fff';
-                                                    e.target.style.color = '#263140';
-                                                    e.target.style.transform = 'scale(1)';
-                                                    e.target.style.border = '1px solid #263140';
-                                                }}>
+                                        <button
+                                            onClick={(e) => handleContinueCourse(course, e)}
+                                            style={{
+                                                padding: '8px 12px',
+                                                backgroundColor: '#fff',
+                                                border: '1px solid #263140',
+                                                color: '#263140',
+                                                borderRadius: '6px',
+                                                cursor: 'pointer',
+                                                fontWeight: '500',
+                                                fontSize: '14px',
+                                                transition: 'all 0.3s ease',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.backgroundColor = '#1a79ff';
+                                                e.target.style.color = '#fff';
+                                                e.target.style.transform = 'scale(1.05)';
+                                                e.target.style.border = '1px solid #1a79ff';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.backgroundColor = '#fff';
+                                                e.target.style.color = '#263140';
+                                                e.target.style.transform = 'scale(1)';
+                                                e.target.style.border = '1px solid #263140';
+                                            }}>
                                             <Icon name="play" size={14} />
                                             Продолжить
                                         </button>
@@ -468,7 +640,7 @@ const CabinetPage = () => {
                     </div>
 
                     <div>
-                        {/* следующие уроки */}
+                        {     }
                         <div style={{
                             backgroundColor: '#fff',
                             border: '1px solid #e9ecef',
@@ -530,7 +702,7 @@ const CabinetPage = () => {
                             )}
                         </div>
 
-                        {/* быстрые ссылки */}
+                        {     }
                         <div style={{
                             backgroundColor: '#fff',
                             border: '1px solid #e9ecef',
@@ -570,7 +742,8 @@ const CabinetPage = () => {
                                         e.target.style.color = '#263140';
                                         e.target.style.transform = 'translateX(0)';
                                         e.target.style.boxShadow = 'none';
-                                    }}>
+                                    }}
+                                    onClick={() => window.location.href = '/homeworks'}>
                                 <Icon name="assignment" size={18} />
                                 Домашние задания
                             </button>
@@ -602,7 +775,8 @@ const CabinetPage = () => {
                                         e.target.style.color = '#263140';
                                         e.target.style.transform = 'translateX(0)';
                                         e.target.style.boxShadow = 'none';
-                                    }}>
+                                    }}
+                                    onClick={() => window.location.href = '/certificates'}>
                                 <Icon name="certificate" size={18} />
                                 Сертификаты
                             </button>

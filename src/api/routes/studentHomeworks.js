@@ -3,7 +3,7 @@ import { StudentHomework } from '../../models/index.js';
 
 const router = express.Router();
 
-// CREATE
+     
 router.post('/', async (req, res, next) => {
     try {
         const homework = await StudentHomework.create(req.body);
@@ -13,7 +13,7 @@ router.post('/', async (req, res, next) => {
     }
 });
 
-// READ ALL
+     
 router.get('/', async (req, res, next) => {
     try {
         const homeworks = await StudentHomework.findAll();
@@ -23,7 +23,7 @@ router.get('/', async (req, res, next) => {
     }
 });
 
-// READ ONE
+     
 router.get('/:id', async (req, res, next) => {
     try {
         const homework = await StudentHomework.findByPk(req.params.id);
@@ -34,7 +34,7 @@ router.get('/:id', async (req, res, next) => {
     }
 });
 
-// UPDATE
+     
 router.put('/:id', async (req, res, next) => {
     try {
         const homework = await StudentHomework.findByPk(req.params.id);
@@ -46,7 +46,7 @@ router.put('/:id', async (req, res, next) => {
     }
 });
 
-// DELETE
+     
 router.delete('/:id', async (req, res, next) => {
     try {
         const homework = await StudentHomework.findByPk(req.params.id);
